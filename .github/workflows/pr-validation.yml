@@ -20,13 +20,21 @@ jobs:
         run: |
           set -euo pipefail
 
-          pr_data=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json closingIssuesReferences)
-          linked_issues=$(jq -r '(.closingIssuesReferences // []) | length' <<< "$pr_data")
+          for attempt in {1..6}; do
+            pr_data=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json closingIssuesReferences)
+            linked_issues=$(jq -r '(.closingIssuesReferences // []) | length' <<< "$pr_data")
 
-          if (( linked_issues == 0 )); then
-            echo "ERROR: Pull request must be linked to an existing issue."
-            echo "Use a closing keyword in the PR body, e.g.: Closes #123"
-            exit 1
-          fi
+            if (( linked_issues > 0 )); then
+              echo "PR is linked to $linked_issues issue(s). Validation passed."
+              exit 0
+            fi
 
-          echo "PR is linked to $linked_issues issue(s). Validation passed."
+            if (( attempt < 6 )); then
+              echo "Issue link is not available yet; retrying in 5 seconds."
+              sleep 5
+            fi
+          done
+
+          echo "ERROR: Pull request must be linked to an existing issue."
+          echo "Use a closing keyword in the PR body, e.g.: Closes #123"
+          exit 1
