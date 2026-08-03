@@ -113,6 +113,20 @@ npm install
 npm run dev
 ```
 
+## 📦 Production images
+
+Every push to `main` publishes two OCI images to GitHub Container Registry:
+
+```text
+ghcr.io/jabfy-corp/jabfy-website-frontend:latest
+ghcr.io/jabfy-corp/jabfy-website-backend:latest
+```
+
+Each image also receives a `sha-<commit>` tag and an immutable digest. Production
+deployments must use the digest reported by the workflow, not `latest`. The
+frontend listens on port `8080`; the backend listens on port `3001` and requires
+`FRONTEND_URL` to match the public frontend URL.
+
 ### Backend
 
 ```bash
